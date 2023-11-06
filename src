@@ -1,0 +1,239 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <time.h>
+#include <string.h>
+
+// Definições adicionais para o arquivo de ranking
+#define ARQUIVO_RANKING "ranking.txt"
+
+struct Jogada {
+    int linha;
+    int coluna;
+    char jogador;
+};
+
+void imprimirTabuleiro(char **tabuleiro, int tamanhoTabuleiro) {
+    for (int i = 0; i < tamanhoTabuleiro; i++) {
+        for (int j = 0; j < tamanhoTabuleiro; j++) {
+            printf("%c ", tabuleiro[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+bool verificarVitoria(char **tabuleiro, int tamanhoTabuleiro, char simbolo) {
+    for (int i = 0; i < tamanhoTabuleiro; i++) {
+        bool vitoriaLinha = true;
+        bool vitoriaColuna = true;
+        for (int j = 0; j < tamanhoTabuleiro; j++) {
+            if (tabuleiro[i][j] != simbolo) {
+                vitoriaLinha = false;
+            }
+            if (tabuleiro[j][i] != simbolo) {
+                vitoriaColuna = false;
+            }
+        }
+        if (vitoriaLinha || vitoriaColuna) {
+            return true;
+        }
+    }
+
+    bool vitoriaDiagonal1 = true;
+    bool vitoriaDiagonal2 = true;
+    for (int i = 0; i < tamanhoTabuleiro; i++) {
+        if (tabuleiro[i][i] != simbolo) {
+            vitoriaDiagonal1 = false;
+        }
+        if (tabuleiro[i][tamanhoTabuleiro - 1 - i] != simbolo) {
+            vitoriaDiagonal2 = false;
+        }
+    }
+    if (vitoriaDiagonal1 || vitoriaDiagonal2) {
+        return true;
+    }
+
+    return false;
+}
+
+bool verificarEmpate(char **tabuleiro, int tamanhoTabuleiro) {
+    for (int i = 0; i < tamanhoTabuleiro; i++) {
+        for (int j = 0; j < tamanhoTabuleiro; j++) {
+            if (tabuleiro[i][j] == ' ') {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+void fazerJogadaRobo(char **tabuleiro, int tamanhoTabuleiro, char simbolo) {
+    srand(time(NULL));
+    while (true) {
+        int linha = rand() % tamanhoTabuleiro;
+        int coluna = rand() % tamanhoTabuleiro;
+        if (tabuleiro[linha][coluna] == ' ') {
+            tabuleiro[linha][coluna] = simbolo;
+            break;
+        }
+    }
+}
+
+void mostrarHistoricoJogadas(struct Jogada *jogadas, int totalJogadas) {
+    printf("\nHistórico de jogadas:\n");
+    for (int i = 0; i < totalJogadas; i++) {
+        printf("Jogador %c jogou na posição (%d, %d)\n", jogadas[i].jogador, jogadas[i].linha, jogadas[i].coluna);
+    }
+}
+
+void mostraRanking(struct Jogada *jogadas, int totalJogadas) {
+    int vitoriasJogador1 = 0;
+    int vitoriasJogador2 = 0;
+    for (int i = 0; i < totalJogadas; i++) {
+        if (jogadas[i].jogador == 'X') {
+            vitoriasJogador1++;
+        } else if (jogadas[i].jogador == 'O') {
+            vitoriasJogador2++;
+        }
+    }
+    printf("\nRanking de Vitórias:\n");
+    printf("%s: %d vitórias\n", "Jogador 1", vitoriasJogador1);
+    printf("%s: %d vitórias\n", "Jogador 2", vitoriasJogador2);
+}
+void salvarRanking(char *jogador1, char *jogador2, int vitoriasJogador1, int vitoriasJogador2) {
+    FILE *arquivo = fopen(ARQUIVO_RANKING, "w");
+    if (arquivo == NULL) {
+        printf("Erro ao abrir o arquivo de ranking para escrita.\n");
+        return;
+    }
+    fprintf(arquivo, "%s: %d vitórias\n", jogador1, vitoriasJogador1);
+    fprintf(arquivo, "%s: %d vitórias\n", jogador2, vitoriasJogador2);
+    fclose(arquivo);
+}
+
+void mostrarRanking(struct Jogada *jogadas, int totalJogadas) {
+    char linha[100];
+    FILE *arquivo = fopen(ARQUIVO_RANKING, "r");
+    if (arquivo == NULL) {
+        printf("Erro ao abrir o arquivo de ranking para leitura.\n");
+        return;
+    }
+    printf("\nRanking de Vitórias:\n");
+    while (fgets(linha, sizeof(linha), arquivo)) {
+        printf("%s", linha);
+    }
+    fclose(arquivo);
+}
+
+
+int main() {
+    int opcao;
+    int tamanhoTabuleiro;
+    char **tabuleiro;
+    char jogador1[100], jogador2[100];
+    int totalJogadas = 0;
+    struct Jogada jogadas[100];
+
+    printf("Bem-vindo ao Jogo da Velha!\n");
+
+    while (true) {
+        printf("\nMenu:\n");
+        printf("1. Iniciar jogo\n");
+        printf("2. Ver histórico de jogadas\n");
+        printf("3. Ver ranking\n");
+        printf("4. Sair\n");
+        printf("Escolha uma opção: ");
+        scanf("%d", &opcao);
+
+        if (opcao == 1) {
+            printf("Modo de jogo:\n");
+            printf("1. Jogador vs Jogador\n");
+            printf("2. Jogador vs Robô\n");
+            printf("Escolha o modo de jogo: ");
+            scanf("%d", &opcao);
+
+            printf("Digite o nome do Jogador 1: ");
+            scanf("%s", jogador1);
+
+            if (opcao == 1) {
+                printf("Digite o nome do Jogador 2: ");
+                scanf("%s", jogador2);
+            } else if (opcao == 2) {
+                strcpy(jogador2, "Robô");
+            }
+
+            printf("Escolha o tamanho do tabuleiro (3 a 10): ");
+            scanf("%d", &tamanhoTabuleiro);
+
+            tabuleiro = (char **)malloc(tamanhoTabuleiro * sizeof(char *));
+            for (int i = 0; i < tamanhoTabuleiro; i++) {
+                tabuleiro[i] = (char *)malloc(tamanhoTabuleiro * sizeof(char));
+            }
+
+            for (int i = 0; i < tamanhoTabuleiro; i++) {
+                for (int j = 0; j < tamanhoTabuleiro; j++) {
+                    tabuleiro[i][j] = ' ';
+                }
+            }
+
+            printf("Tabuleiro inicial:\n");
+            imprimirTabuleiro(tabuleiro, tamanhoTabuleiro);
+
+            while (true) {
+                char jogadorAtual = (totalJogadas % 2 == 0) ? 'X' : 'O';
+                int linha, coluna;
+
+                if (strcmp(jogador2, "Robô") == 0 && jogadorAtual == 'O') {
+                    printf("Vez do Robô...\n");
+                    fazerJogadaRobo(tabuleiro, tamanhoTabuleiro, jogadorAtual);
+                    printf("Tabuleiro após a jogada do Robô:\n");
+                    imprimirTabuleiro(tabuleiro, tamanhoTabuleiro);
+                } else {
+                    printf("Vez do Jogador %c.\n", jogadorAtual);
+
+                    do {
+                        printf("Digite a linha (1 a %d): ", tamanhoTabuleiro);
+                        scanf("%d", &linha);
+                        printf("Digite a coluna (1 a %d): ", tamanhoTabuleiro);
+                        scanf("%d", &coluna);
+                    } while (linha < 1 || linha > tamanhoTabuleiro || coluna < 1 || coluna > tamanhoTabuleiro || tabuleiro[linha - 1][coluna - 1] != ' ');
+
+                    tabuleiro[linha - 1][coluna - 1] = jogadorAtual;
+                    printf("Tabuleiro após a jogada:\n");
+                    imprimirTabuleiro(tabuleiro, tamanhoTabuleiro);
+                }
+
+                jogadas[totalJogadas].linha = linha;
+                jogadas[totalJogadas].coluna = coluna;
+                jogadas[totalJogadas].jogador = jogadorAtual;
+                totalJogadas++;
+
+                if (verificarVitoria(tabuleiro, tamanhoTabuleiro, jogadorAtual)) {
+                    printf("Jogador %c venceu!\n", jogadorAtual);
+                    mostrarRanking(jogadas, totalJogadas);
+                    break;
+                } else if (verificarEmpate(tabuleiro, tamanhoTabuleiro)) {
+                    printf("O jogo terminou em empate!\n");
+                    mostrarRanking(jogadas, totalJogadas);
+                    break;
+                }
+            }
+        } else if (opcao == 2) {
+            mostrarHistoricoJogadas(jogadas, totalJogadas);
+        } else if (opcao == 3) {
+            mostrarRanking(jogadas, totalJogadas);
+        } else if (opcao == 4) {
+            break;
+        } else {
+            printf("Opção inválida. Tente novamente.\n");
+        }
+    }
+
+    // Liberar memória alocada para o tabuleiro
+    for (int i = 0; i < tamanhoTabuleiro; i++) {
+        free(tabuleiro[i]);
+    }
+    free(tabuleiro);
+
+    return 0;
+}
